@@ -26,6 +26,3 @@ According to Facebook: "The archive includes Facebook and Instagram ads that hav
 
 ### [Damon McCoy](http://damonmccoy.com) 
 
-
-
-## Contact us.
