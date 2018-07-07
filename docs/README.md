@@ -19,7 +19,7 @@ We investigate the following questions in analysis section of the paper:
 - What is the size of political advertising on Facebook?
 - Who is paying for political ads on Facebook?
 - What issues are the focus of political ads on Facebook?
-- Who is being shown political ads on Facebook?
+- Who is being shown political ads on Facebook?  
 We also dig into our data to discover the top sponsors, pages, demographic groups based on minimum impressions garnered. 
 
 ## The team.
