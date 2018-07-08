@@ -20,6 +20,12 @@ We investigate the following questions in analysis section of the paper:
 
 We also dig into our data to discover the top sponsors, pages, demographic groups based on minimum impressions garnered. 
 
+
+## Reports
+- Paper?
+- Technical Report?
+
+
 ## The Team
 [Laura Edelson](https://www.linkedin.com/in/laura-edelson-4654182/)  
 [Shikhar Sakhuja](https://www.linkedin.com/in/shikhar394/)  
