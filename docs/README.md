@@ -1,4 +1,4 @@
-# Welcome to the codebase and home of NYU's effort to analyze [Facebook's Political Ad Archive](https://www.facebook.com/politicalcontentads/)
+# NYU's effort to analyze [Facebook's Political Ad Archive](https://www.facebook.com/politicalcontentads/)
 Our team at NYU performed an initial analysis of Facebook's archive of ads with political content that primarily span eight weeks from May 2018 - July 2018. 
 
 
