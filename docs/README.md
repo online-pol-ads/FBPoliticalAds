@@ -1,5 +1,5 @@
 # NYU's effort to scrape and analyze [Facebook's Political Ad Archive](https://www.facebook.com/politicalcontentads/)
-Our team at NYU performed an initial analysis of Facebook's archive of ads with political content that primarily span eight weeks from May 2018 - July 2018. 
+Our team performed an initial analysis of Facebook's archive of ads with political content that primarily span eight weeks from May 2018 - July 2018. 
 
 
 ## Introduction
@@ -24,10 +24,4 @@ We also dig into our data to discover the top sponsors, pages, demographic group
 ## Reports
 - Paper?
 - Technical Report?
-
-
-## The Team
-[Laura Edelson](https://www.linkedin.com/in/laura-edelson-4654182/)  
-[Shikhar Sakhuja](https://www.linkedin.com/in/shikhar394/)  
-[Damon McCoy](http://damonmccoy.com)  
 
