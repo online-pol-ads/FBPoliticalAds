@@ -1,0 +1,46 @@
+Running the script to scrape ads - FBAdScrapeScript.py
+  
+  Text enclosed in triple quotes (""" """) are only instructions on how to define the config file. 
+  The text should be excluded from the config file when running the script. 
+  
+  Set up a config file with the following fields: 
+  
+    [ACCOUNT]
+    EMAIL= Email of a valid FB account
+    PASS= Password for the account
+
+    [COOKIES]
+      """
+      For the following fields, access https://www.facebook.com/politicalcontentads/ and do a search for any keyword.
+
+      GOOGLE CHROME:
+        Inspect the page. Select the Network tab in the browser tools. Reload page if no calls are shown.
+        In the 'Headers' subsection of the call named 'bz', find the "Form Data" section.
+
+      MOZILLA:
+        Inspect the page. Select the Network tab in the browser tools. 
+        Find the call made with the File name 'bz' using 'POST' method. 
+        Select the params subsection.
+
+      Set values for USERFIELD, AFIELD, DYNFIELD with __user, __a, __dyn respectively
+      """
+    USERFIELD=__user
+    AFIELD=__a
+    DYNFIELD=__dyn
+
+    [SEEDLIST]
+      """
+      MASTERSEEDFILE is set to MasterSeeds.txt contains all the search words we used for analysis. 
+      This a list of >1200 search words.
+      SEEDFILE can be set to include search words that you may wanna extract ads for. If SEEDFILE remains 
+      set to XXX then, the program will select MASTERSEEDFILE to be the default and run a scrape on all the keywords 
+      that we included in the MasterSeeds.txt
+      """
+    MASTERSEEDFILE=MasterSeeds.txt 
+    SEEDFILE=XXX
+  
+  Finally, run the script using:
+    python FBAdScrapeScript.py [name of config file]
+    
+
+  
