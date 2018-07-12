@@ -1,47 +1,53 @@
-import urllib3
-import urllib.parse
-import requests 
-from pprint import pprint
-import json
-import pickle
-import time
-import shutil
-import os
-import sys
+import configparser
 import csv
+import json
+import os
+import pickle
+import shutil
+import sys
+import time
+import urllib.parse
+from pprint import pprint
 
-login = "https://www.facebook.com/politicalcontentads"
+import requests
+import urllib3
 
-adMetadataLinkTemplate = \
-        "https://www.facebook.com/politicalcontentads/ads/?q=%s&count=%s&active_status=all&dpr=1&%s" 
 
-adMetadataLinkNextPageTemplate = \
-        "https://www.facebook.com/politicalcontentads/ads/?q=clinton&page_token=%s&count=%s&active_status=all&dpr=1&%s"
+if len(sys.argv) < 2:
+    exit("Usage:python3 import_ads_to_db.py import_ads_to_db.cfg")
 
-adContentLinkTemplate = "https://www.facebook.com/ads/political_ad_archive/creative_snapshot/?%s&dpr=1&%s"
-# The above link takes in q = Seed word, count = # of ads to be shown and we append the parameters at the end of the link
-# The request response contains the total # of ads for a given seed under "totalCount".
-test_seed = "test"
 
-http = urllib3.PoolManager()
-prefix_length = len("for (;;);")
+config = configparser.ConfigParser()
+config.read(sys.argv[1])
+
+Email = config['ACCOUNT']['EMAIL']
+Password = config['ACCOUNT']['PASS']
 
 parameters_for_URL = {
-    "__user":"100026761269396",
-    "__a":"1",
-    "__dyn":"7xe6Fo4OQ5E5Obx679uC1swgE98nwgU6C7UW3K2K7E5G3mewXx61rwaS12x60Vo7W0-FHwiE3awExK1RxO2u0IobEa8465oOfwjU3jwjbAyE",
+    "__user":config['COOKIES']['USERFIELD'],
+    "__a":config['COOKIES']['AFIELD'],
+    "__dyn":config['COOKIES']['DYNFIELD'],
 }
+
+MasterSeedList = config['SEEDLIST']['MASTERSEEDFILE']
 
 URLparameters = urllib.parse.urlencode(parameters_for_URL)
 
-StartTimeStamp = 'NEWcrawl_'+str(int(time.time())) # Adding NEW so DB parser doesn't try to parse this until it's complete.
+prefix_length = len("for (;;);")
 
-MasterSeedList = "MasterSeeds.txt"
+StartTimeStamp = 'NEWcrawl_'+str(int(time.time())) # Adding NEW so DB parser doesn't try to parse this until it's complete.
 
 LatestTimestampRecorded = 0
 
+adMetadataLinkTemplate = "https://www.facebook.com/politicalcontentads/ads/?q=%s&count=%s&active_status=all&dpr=1&%s"
 
+# The above link takes in q = Seed word, count = # of ads to be shown and we append the parameters at the end of the link
+# The request response contains the total # of ads for a given seed under "totalCount".
 
+adMetadataLinkNextPageTemplate = "https://www.facebook.com/politicalcontentads/ads/?q=%s&page_token=%s&count=%s&active_status=all&dpr=1&%s"
+# The above link has additional parameter for the page_token that is retrieved when the inital call is made to get the metadata.
+
+adContentLinkTemplate = "https://www.facebook.com/ads/political_ad_archive/creative_snapshot/?%s&dpr=1&%s"
 
 
 def ExtractLastTimestampExtracted():
@@ -56,7 +62,6 @@ def ExtractLastTimestampExtracted():
             CrawlDate = int(FolderName[len('crawl_'):])
             if CrawlDate > LatestTimestampRecorded:
                 LatestTimestampRecorded = CrawlDate
-    #print("Latest time registered: ", LatestTimestampRecorded)
 
 
 
@@ -81,7 +86,7 @@ def MigrateFilesProperDirectory(src, dst):
 
 
 
-def ScrapeAdMetadataByKeyword(CurrentSession, Seed, NumAds = 5000):
+def ScrapeAdMetadataByKeyword(CurrentSession, Seed, NumAds = 2000):
     """
     Returns a list of dictionaries that includes metadata of the Ad and 
     also includes it's performance details. Our program crawls 5000 
@@ -93,20 +98,19 @@ def ScrapeAdMetadataByKeyword(CurrentSession, Seed, NumAds = 5000):
     AllAdMetadata = []
     totalAdCountCurrent = 0
     IterationCount = 1
-    
     URLparameters = urllib.parse.urlencode(parameters_for_URL)
-    AdMetadataLink = adMetadataLinkTemplate % (Seed, NumAds, URLparameters) # Scapes 5000 ads
+    AdMetadataLink = adMetadataLinkTemplate % (Seed, NumAds, URLparameters) # Scapes 2000 ads
     data = CurrentSession.get(AdMetadataLink)
     DataRetrievedFromLink = data.text[prefix_length:] 
     DataRetrievedFromLinkJson = json.loads(DataRetrievedFromLink)
     AllAdMetadata.append(DataRetrievedFromLinkJson)
-    WriteToFiles(DataRetrievedFromLinkJson, "Metadata", Seed)
     totalAdCount = DataRetrievedFromLinkJson['payload']['totalCount']
     totalAdCountCurrent += len(DataRetrievedFromLinkJson['payload']['results'])
-    time.sleep(5)
-
-    while not DataRetrievedFromLinkJson['payload']['isResultComplete']:
-        # Scrapes 500 ads till FB returns more ads. 
+    print("Ads collected ", totalAdCountCurrent)
+    while not DataRetrievedFromLinkJson['payload']['isResultComplete'] and totalAdCountCurrent < 8000:
+        # Limit ad collection to 8000 since FB kills connection after that.
+        # WIP to work around the 8K ad limit.  
+        time.sleep(3)
         IterationCount += 1
         nextPageToken = DataRetrievedFromLinkJson["payload"]["nextPageToken"]
         nextPageToken = urllib.parse.quote(nextPageToken)
@@ -114,17 +118,25 @@ def ScrapeAdMetadataByKeyword(CurrentSession, Seed, NumAds = 5000):
         DataRetrievedFromLink = ""
         DataRetrievedFromLinkJson = {}
         adMetadataLinkNextPage = \
-                adMetadataLinkNextPageTemplate % (nextPageToken, 500, URLparameters)
+                adMetadataLinkNextPageTemplate % (Seed, nextPageToken, 2000, URLparameters)
+        for attempts in range(5):
+            try:
+                data = CurrentSession.get(adMetadataLinkNextPage)
+                DataRetrievedFromLink = data.text[prefix_length:] 
+                DataRetrievedFromLinkJson = json.loads(DataRetrievedFromLink)
+                AllAdMetadata.append(DataRetrievedFromLinkJson)
+                totalAdCount = DataRetrievedFromLinkJson['payload']['totalCount']
+                totalAdCountCurrent += len(DataRetrievedFromLinkJson['payload']['results'])
+                print("Ads collected ", totalAdCountCurrent)
+                time.sleep(1)
+                break
+            except:
+                if attempts == 4:
+                    totalAdCountCurrent = 8000
+                    break
+                print("Trying again")
+                time.sleep(3)
 
-        data = CurrentSession.get(adMetadataLinkNextPage)
-        DataRetrievedFromLink = data.text[prefix_length:] 
-        DataRetrievedFromLinkJson = json.loads(DataRetrievedFromLink)
-
-        AllAdMetadata.append(DataRetrievedFromLinkJson)
-        totalAdCountCurrent += len(DataRetrievedFromLinkJson['payload']['results'])
-        #pprint(DataRetrievedFromLinkJson)
-        #print("\n\n")
-        time.sleep(5)
     WriteToFiles(AllAdMetadata, "Metadata", Seed) #List of dictionaries returned
     return AllAdMetadata
 
@@ -140,11 +152,9 @@ def AddLatestAds(AdsDataJson, Seed):
         AllSeeds = set([Seed.strip() for Seed in f.readlines() if Seed.strip() != ""])
     NewResults = []
     if Seed.strip() not in AllSeeds:
-        #print("Not in master seed list\n\n\n")
         return
     for ad in AdsDataJson['payload']['results']:
         if int(ad['startDate']) > LatestTimestampRecorded:
-            #print("Adding new ad.")
             NewResults.append(ad)
     AdsDataJson['payload']['results'] = NewResults[:]
     return
@@ -212,22 +222,21 @@ def ScrapeAdsByAdIDs(currentSession, adIDs, Seed):
     """
     allAdsContents = []
     adIDQueryList = []
+    count = 0
     for adIDList in adIDs:
+
         for adID in range(0, len(adIDList)):
             adIDQueryList.append("ids[" + str(adID) + "]=" + adIDList[adID])
-        adIDQuery = "&".join(adIDQueryList)
-        adIDQueryList = []
-        #print(adIDQuery)
-        adContentLink = adContentLinkTemplate % (adIDQuery, URLparameters)
-        adContentRetrieved = currentSession.get(adContentLink)
-        adContentRetrieved = adContentRetrieved.text[prefix_length:]
-        
-        #print(Seed)
-        #print('\n\n\n\n')
-        #pprint(adContentRetrieved)
-        adContentRetrievedJson = json.loads(adContentRetrieved)
-        time.sleep(3)
-        allAdsContents.append(adContentRetrievedJson)    
+        if adIDQueryList:
+            count += 1
+            adIDQuery = "&".join(adIDQueryList)
+            adIDQueryList = []
+            adContentLink = adContentLinkTemplate % (adIDQuery, URLparameters)
+            adContentRetrieved = currentSession.get(adContentLink)
+            adContentRetrieved = adContentRetrieved.text[prefix_length:]
+            adContentRetrievedJson = json.loads(adContentRetrieved)
+            time.sleep(3)
+            allAdsContents.append(adContentRetrievedJson)   
     WriteToFiles(allAdsContents, "Contents", Seed)
 
 
@@ -264,8 +273,6 @@ def extractSeedWordsCSV(SeedListName, FirstName = False, LastName = True):
                 CurrentSeeds = set([' '.join(seedWord).strip() for seedWord in csv.reader(f) if seedWord != " "])
             elif LastName and not FirstName:
                 CurrentSeeds = set([seedWord[1] for seedWord in csv.reader(f) if seedWord != " "])
-            #print(CurrentSeeds)
-            #exit()
             MasterSeeds = set([seedWord.strip() for seedWord in f1.readlines() if seedWord != " "])
             NewSeeds = list(CurrentSeeds-MasterSeeds)
             for Seed in NewSeeds:
@@ -294,16 +301,17 @@ if __name__ == "__main__":
     ExtractLastTimestampExtracted()
     IterationCount = 0
     SeedCount = 0
+    Start = time.time()
     with requests.Session() as currentSession:
-        data = {"email":Email, "pass":Password}
+        data = {"email":config['ACCOUNT']['EMAIL'], "pass":config['ACCOUNT']['PASS']}
         post = currentSession.post("https://www.facebook.com/login", data)
         post = currentSession.post("https://www.facebook.com/login", data)
-        if len(sys.argv)>1:
-            Seeds = extractSeedWords(sys.argv[1])
+        if config['SEEDLIST']['SEEDFILE'] != 'XXX':
+            Seeds = extractSeedWords(config['SEEDLIST']['SEEDFILE'])
         else:
             Seeds = extractSeedWords() # Routine scrape of all Seeds previously scraped.
-        print(Seeds)
         TotalSeeds = len(Seeds)
+        print("Seeds: \n", Seeds)
         #exit()
         if not os.path.exists(StartTimeStamp):
             os.makedirs(StartTimeStamp)
@@ -312,7 +320,7 @@ if __name__ == "__main__":
             for Seed in Seeds:
                 if Seed.strip() == "":
                     continue
-                print("Working on ", Seed, "\n")
+                print("\nWorking on ", Seed, "\n")
                 SeedCount += 1
                 print("Seed %d out of %d\n" % (SeedCount, TotalSeeds))
                 SkipKeyword = False
@@ -322,16 +330,15 @@ if __name__ == "__main__":
                         break
                         # FB cuts off some connections randomly and doesn't return any data. 
                         # to work around presumable load balancing of FB servers, every
-                        # keyword will be tried 5 times if FB resets connection with a time interval of 20secs.
+                        # keyword will be tried 5 times if FB resets connection with a time interval of 10 secs.
                     except: 
                         if attempts == 4:
                             SkipKeyword = True
                             break
-                        time.sleep(20)
+                        time.sleep(10)
 
                 time.sleep(10)
                 adIDs = ScrapeAdIDs(AllAdsMetadata)
-
                 for attempts in range(5):
                     try:        
                         ScrapeAdsByAdIDs(currentSession, adIDs, Seed)
@@ -340,9 +347,8 @@ if __name__ == "__main__":
                         if attempts == 4:
                              SkipKeyword = True
                              break
-                        time.sleep(20)
+                        time.sleep(10)
 
                 if not SkipKeyword:
                     f.write(Seed.strip() + '\n')
-    #time.sleep(60)
-    MigrateFilesProperDirectory(StartTimeStamp, StartTimeStamp[3:]) #To remove NEW prefix
+    os.rename(StartTimeStamp, StartTimeStamp[3:]) #To remove NEW prefix
