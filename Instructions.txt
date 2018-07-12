@@ -1,5 +1,5 @@
 Text enclosed in triple quotes (""" """) are only instructions on how to define the config file. 
-The text, along with triple quotes should be excluded from the config file when running the script. 
+The text, along with triple quotes, should be excluded from the config file when running the script. 
 
 
 
