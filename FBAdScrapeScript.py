@@ -14,7 +14,7 @@ import urllib3
 
 
 if len(sys.argv) < 2:
-    exit("Usage:python3 import_ads_to_db.py import_ads_to_db.cfg")
+    exit("Usage:python3 FBAdScrapeScript.py crawl_config.cfg")
 
 
 config = configparser.ConfigParser()
