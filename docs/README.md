@@ -22,6 +22,6 @@ We also dig into our data to discover the top sponsors, pages, demographic group
 
 
 ## Reports
-- [Paper](https://github.com/online-pol-ads/FBPoliticalAds/blob/master/docs/facebooks-pol-ad-archive-analysis.pdf)
-- Technical Report?
+- [Paper](https://github.com/online-pol-ads/FBPoliticalAds/blob/master/docs/Facebooks-archive.pdf)
+- Technical Report
 
