@@ -15,7 +15,7 @@ if len(sys.argv) < 2:
 config = configparser.ConfigParser()
 config.read(sys.argv[1])
 
-crawl_date = datetime.date.today() - datetime.timedelta(days=10) #LAE - remove the minus
+crawl_date = datetime.date.today() - datetime.timedelta(days=1) #LAE - remove the minus
 
 HOST = config['POSTGRES']['HOST']
 DBNAME = config['POSTGRES']['DBNAME']
@@ -32,6 +32,7 @@ ad_ids = set()
 for row in cursor:
     ad_ids.add(row['id'])
 
+
 ad_sponsor_query = "select name, nyu_id from ad_sponsors"
 cursor.execute(ad_sponsor_query)
 ad_sponsor_ids = {}
@@ -44,7 +45,6 @@ page_ids = set()
 for row in cursor:
     page_ids.add(row['id'])
 
-print(page_ids)
 
 category_query = "select id from categories"
 cursor.execute(category_query)
@@ -91,60 +91,68 @@ for FolderName in os.listdir(crawl_folder):
         continue
     print("Parsing " + FolderName + " content")
     with open(crawl_folder + FolderName + "/Contents.txt", 'r') as content_file:
-        Ads = json.loads(content_file.read())[0]['payload']
-        for ad_id, ad_contents in Ads.items():
-            if str(ad_id) in ad_ids:
-                continue #we've already seen this ad_id, we don't have to reinsert its contents
-            ad_archive_id = ad_contents['adArchiveID']
-            ad_has_cards = False
-            fields = ad_contents['fields']
-            ad_sponsor_name = fields['byline']
-            if ad_sponsor_name not in ad_sponsor_ids: #we've never seen this ad sponsor before, we need to add it 
-                ad_sponsors_to_insert.add(ad_sponsor_name)
-
-            if 'cards' in fields and fields['cards']:#all cards need to get inserted to the cards table
-                ad_has_cards = True
-                cards_to_insert[ad_archive_id] = set()
-                for card in fields['cards']:
-                    text = card['body']
-                    title = ''
-                    if 'caption' in card:
-                        title = card['caption']
-                        video_url = ''
-                    if 'video_hd_url' in card and card['video_hd_url']:
-                        video_url = card['video_hd_url']
-                    image_url = ""
-                    if 'original_image_url' in card:
-                        image_url = card['original_image_url']
-                    curr_card = CardRecord(ad_archive_id, text, title, video_url, image_url)
-                    cards_to_insert[ad_archive_id].add(curr_card)
+        json_data = json.loads(content_file.read())
+        for section in json_data:
+            if 'payload' not in section:
+                continue
+            Ads = section['payload']
+            for ad_id, ad_contents in Ads.items():
+                if str(ad_id) in ad_ids:
+                    continue #we've already seen this ad_id, we don't have to reinsert its contents
+                ad_archive_id = ad_contents['adArchiveID']
+                ad_has_cards = False
+                fields = ad_contents['fields']
+                ad_sponsor_name = fields['byline']
+                if ad_sponsor_name not in ad_sponsor_ids: #we've never seen this ad sponsor before, we need to add it 
+                    ad_sponsors_to_insert.add(ad_sponsor_name)
+  
+                if 'cards' in fields and fields['cards']:#all cards need to get inserted to the cards table
+                    ad_has_cards = True
+                    cards_to_insert[ad_archive_id] = set()
+                    for card in fields['cards']:
+                        text = card['body']
+                        title = ''
+                        if 'caption' in card:
+                            title = card['caption']
+                            video_url = ''
+                        if 'video_hd_url' in card and card['video_hd_url']:
+                            video_url = card['video_hd_url']
+                        image_url = ""
+                        if 'original_image_url' in card:
+                            image_url = card['original_image_url']
+                        curr_card = CardRecord(ad_archive_id, text, title, video_url, image_url)
+                        cards_to_insert[ad_archive_id].add(curr_card)
             
-            ad_page_id = int(fields['page_id'])
-            if ad_page_id not in page_ids:#we've never seen this page before, so we need to add it
-                page_name = fields['page_name']
-                page_url = fields['page_profile_uri']
-                page_is_deleted = fields['page_is_deleted']
-                curr_page = PageRecord(ad_page_id, page_name, page_url, page_is_deleted)
-                pages_to_insert[ad_page_id] = curr_page
-                page_category_dict = fields['page_categories']
-                page_category_links_to_insert[ad_page_id] = []
-                for category_id, category_name in page_category_dict.items():
-                    category_id = int(category_id)
-                    if category_id not in category_ids:#we've never seen this category before, so we need to add it
-                       categories_to_insert[category_id] = category_name
+                ad_page_id = int(fields['page_id'])
+                if ad_page_id not in page_ids:#we've never seen this page before, so we need to add it
+                    page_name = fields['page_name']
+                    page_url = fields['page_profile_uri']
+                    page_is_deleted = fields['page_is_deleted']
+                    curr_page = PageRecord(ad_page_id, page_name, page_url, page_is_deleted)
+                    pages_to_insert[ad_page_id] = curr_page
+                    page_category_dict = {}
+                    if 'page_categories' in fields: page_category_dict = fields['page_categories']
+                    page_category_links_to_insert[ad_page_id] = []
+                    for category_id, category_name in page_category_dict.items():
+                        category_id = int(category_id)
+                        if category_id not in category_ids:#we've never seen this category before, so we need to add it
+                           categories_to_insert[category_id] = category_name
 
-                    page_category_links_to_insert[ad_page_id].append(category_id)
-               
-            ad_text = fields['body']['markup']['__html'].strip()
-            ad_image_url = ""
-            if len(fields['images']) > 0 and fields['images'][0]['original_image_url']:
-                ad_image_url = fields['images'][0]['original_image_url']
+                        page_category_links_to_insert[ad_page_id].append(category_id)
+                 
+                ad_text = ""
+                if 'body' in fields and 'markup' in fields['body']: ad_text = fields['body']['markup']['__html'].strip()
+                ad_image_url = ""
+                if 'images' in fields and len(fields['images']) > 0 and fields['images'][0]['original_image_url']:
+                    ad_image_url = fields['images'][0]['original_image_url']
 
-            ad_video_url = ""
-            if len(fields['videos']) > 0 and fields['videos'][0]['video_hd_url']: 
-                ad_video_url = fields['videos'][0]['video_hd_url']
-            curr_ad = AdRecord(ad_archive_id, ad_id, ad_page_id, ad_text, ad_image_url, ad_video_url, ad_has_cards, ad_sponsor_name)
-            ads_to_insert[ad_archive_id] = curr_ad
+                ad_video_url = ""
+                if 'videos' in fields and len(fields['videos']) > 0 and fields['videos'][0]['video_hd_url']: 
+                    ad_video_url = fields['videos'][0]['video_hd_url']
+
+                curr_ad = AdRecord(ad_archive_id, ad_id, ad_page_id, ad_text, ad_image_url, ad_video_url, ad_has_cards, ad_sponsor_name)
+                ads_to_insert[ad_archive_id] = curr_ad
+
 
 snapshots_to_insert = {}
 snapshot_demos_to_insert = {}
@@ -161,58 +169,63 @@ for FolderName in os.listdir(crawl_folder):
         continue
     print("Parsing " + FolderName + " metadata")
     with open(crawl_folder + FolderName + "/Metadata.txt", 'r') as metadata_file:
-        snapshots = json.loads(metadata_file.read())[0]['payload']['results']
-        for snapshot in snapshots:
-            if not snapshot['adInsightsInfo']:
+        json_data = json.loads(metadata_file.read())
+        for section in json_data:
+            if 'payload' not in section:
                 continue
-            snapshot_id = snapshot['snapshotID']
-            start_date = time.gmtime(snapshot['startDate'])
-            end_date = time.gmtime(snapshot['endDate'])
-            if not end_date: end_date = ""
-            ad_archive_id = snapshot['adArchiveID']
-            is_active = snapshot['isActive']
-            currency = snapshot['adInsightsInfo']['currency']
-            min_spend = max_spend = min_impressions = max_impressions = 0
-            if snapshot['adInsightsInfo']['spend'] not in spend_strings or  snapshot['adInsightsInfo']['impressions'] not in impression_strings:
-                continue
-            min_spend, max_spend = spend_strings[snapshot['adInsightsInfo']['spend']]
-            min_impressions, max_impressions = impression_strings[snapshot['adInsightsInfo']['impressions']]
-            curr_snapshot = SnapshotRecord(snapshot_id, ad_archive_id, start_date, end_date, is_active, max_spend, min_spend,\
-            max_impressions, min_impressions, currency)
-            snapshots_to_insert[snapshot_id] = curr_snapshot
-            if snapshot['adInsightsInfo']['locationData']:
-                region_values = []
-                for location in snapshot['adInsightsInfo']['locationData']:
-                    if location['region'] not in regions:
-                        regions_to_insert.add(location['region'])
-                    region_values.append(SnapshotRegionRecord(location['region'], min_impressions * location['reach'], \
-                    max_impressions * location['reach']))
 
-                snapshot_regions_to_insert[snapshot_id] = region_values
+            snapshots = section['payload']['results']
+            for snapshot in snapshots:
+                if not snapshot['adInsightsInfo']:
+                    continue
+                snapshot_id = snapshot['snapshotID']
+                start_date = time.gmtime(snapshot['startDate'])
+                end_date = time.gmtime(snapshot['endDate'])
+                if not end_date: end_date = ""
+                ad_archive_id = snapshot['adArchiveID']
+                is_active = snapshot['isActive']
+                currency = snapshot['adInsightsInfo']['currency']
+                min_spend = max_spend = min_impressions = max_impressions = 0
+                if snapshot['adInsightsInfo']['spend'] not in spend_strings or  snapshot['adInsightsInfo']['impressions'] not in impression_strings:
+                    continue
+                min_spend, max_spend = spend_strings[snapshot['adInsightsInfo']['spend']]
+                min_impressions, max_impressions = impression_strings[snapshot['adInsightsInfo']['impressions']]
+                curr_snapshot = SnapshotRecord(snapshot_id, ad_archive_id, start_date, end_date, is_active, max_spend, min_spend,\
+                max_impressions, min_impressions, currency)
+                snapshots_to_insert[snapshot_id] = curr_snapshot
+                if snapshot['adInsightsInfo']['locationData']:
+                    region_values = []
+                    for location in snapshot['adInsightsInfo']['locationData']:
+                        if location['region'] not in regions:
+                            regions_to_insert.add(location['region'])
+                        region_values.append(SnapshotRegionRecord(location['region'], min_impressions * location['reach'], \
+                        max_impressions * location['reach']))
 
-            if snapshot['adInsightsInfo']['ageGenderData']:
-                demo_values = []
-                for demo_group in snapshot['adInsightsInfo']['ageGenderData']:
-                    age_range = demo_group['age_range']
-                    if 'unknown' in demo_group:
-                        value = demo_group['unknown']
-                        if 'unknown'+ age_range not in demo_groups:
-                            demos_to_insert.add(('unknown', age_range))
-                        demo_values.append(SnapshotDemoRecord(age_range, 'unknown', min_impressions * value, max_impressions * value))
+                    snapshot_regions_to_insert[snapshot_id] = region_values
 
-                    if 'male' in demo_group:
-                        value = demo_group['male']
-                        if 'male'+ age_range not in demo_groups:
-                            demos_to_insert.add(('male', age_range))
-                        demo_values.append(SnapshotDemoRecord(age_range, 'male', min_impressions * value, max_impressions * value))
+                if snapshot['adInsightsInfo']['ageGenderData']:
+                    demo_values = []
+                    for demo_group in snapshot['adInsightsInfo']['ageGenderData']:
+                        age_range = demo_group['age_range']
+                        if 'unknown' in demo_group:
+                            value = demo_group['unknown']
+                            if 'unknown'+ age_range not in demo_groups:
+                                demos_to_insert.add(('unknown', age_range))
+                            demo_values.append(SnapshotDemoRecord(age_range, 'unknown', min_impressions * value, max_impressions * value))
 
-                    if 'female' in demo_group:
-                        value = demo_group['female']
-                        if 'female'+ age_range not in demo_groups:
-                            demos_to_insert.add(('female', age_range))
-                        demo_values.append(SnapshotDemoRecord(age_range, 'female', min_impressions * value, max_impressions * value))
-                 
-                snapshot_demos_to_insert[snapshot_id] = demo_values
+                        if 'male' in demo_group:
+                            value = demo_group['male']
+                            if 'male'+ age_range not in demo_groups:
+                                demos_to_insert.add(('male', age_range))
+                            demo_values.append(SnapshotDemoRecord(age_range, 'male', min_impressions * value, max_impressions * value))
+   
+                        if 'female' in demo_group:
+                            value = demo_group['female']
+                            if 'female'+ age_range not in demo_groups:
+                                demos_to_insert.add(('female', age_range))
+                            demo_values.append(SnapshotDemoRecord(age_range, 'female', min_impressions * value, max_impressions * value))
+                    
+                    snapshot_demos_to_insert[snapshot_id] = demo_values
 
 # insert ad_sponsors, regions, and demo groups. We have to do these first so we can get ids
 if ad_sponsors_to_insert:
