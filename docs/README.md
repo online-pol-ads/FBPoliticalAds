@@ -3,7 +3,7 @@ Our team performed an initial analysis of Facebook's archive of ads with politic
 
 
 ## Introduction
-Facebook launched their searchable archive of U.S. political advertisements on May 24, 2018. We devise a data collection methodology to obtain a major chunk of political ads from Facebook's political ad archive. In our paper attached below, we include our initial analysis of Facebook's political ad archive, our methodology for collecting archived political ads, and a detailed description of the database of political ads that we are releasing in conjunction with the report. 
+Facebook launched their searchable archive of U.S. political advertisements on May 24, 2018. We devise a data collection methodology to obtain a large set of 267,000 political ads from Facebook’s political ad archive. In our paper attached below, we include our initial analysis of Facebook's political ad archive, our methodology for collecting archived political ads, and a detailed description of the database of political ads that we are releasing in conjunction with the report. 
 
 
 ## Facebook Political Ad Archive Overview
@@ -19,6 +19,7 @@ We investigate the following questions in analysis section of the paper:
 - Who is being shown political ads on Facebook? 
 
 We also dig into our data to discover the top sponsors, pages, demographic groups based on minimum impressions garnered. 
+
 
 
 ## Reports
