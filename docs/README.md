@@ -23,7 +23,7 @@ We also dig into our data to discover the top sponsors, pages, demographic group
 
 Overview of Ads.   
 
-![Overview]({{https://online-pol-ads.github.io/FBPoliticalAds}}/docs/Overview.png)
+![Overview]({{  https://online-pol-ads.github.io/FBPoliticalAds  }}/docs/Overview.png)
 
 Heat Map for US Regions Based on Impressions per Capita.   
 
