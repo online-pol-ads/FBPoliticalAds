@@ -20,6 +20,14 @@ We investigate the following questions in analysis section of the paper:
 
 We also dig into our data to discover the top sponsors, pages, demographic groups based on minimum impressions garnered. 
 
+Heat Map for US Regions Based on Impressions per Capita   
+![HeatMap](https://github.com/online-pol-ads/FBPoliticalAds/blob/master/docs/ImpressionsHeatUSAFinal.png)
+
+Impressions per Demographic Group   
+![ImpressionDemos](https://github.com/online-pol-ads/FBPoliticalAds/blob/master/docs/ImpressionsDemographic.png)
+
+
+
 
 
 ## Reports
