@@ -1,13 +1,14 @@
+import configparser
+import datetime
+import json
+import os
+import sys
+import time
 from collections import namedtuple
 from pathlib import Path
-import sys
-import os
-import configparser
+
 import psycopg2
 import psycopg2.extras
-import datetime
-import time
-import json
 
 if len(sys.argv) < 2:
     exit("Usage:python3 import_ads_to_db.py import_ads_to_db.cfg")
