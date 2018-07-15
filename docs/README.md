@@ -25,7 +25,7 @@ Overview of Ads.
 
 ![Overview](https://github.com/online-pol-ads/FBPoliticalAds/blob/master/docs/Overview.png)
 
-Heat Map for US Regions Based on Impressions per Capita   
+Heat Map for US Regions Based on Impressions per Capita.   
 
 ![HeatMap](https://github.com/online-pol-ads/FBPoliticalAds/blob/master/docs/ImpressionsHeatUSAFinal.png)
 
@@ -33,7 +33,7 @@ Category of Political Sponsors.
 
 ![Categories](https://github.com/online-pol-ads/FBPoliticalAds/blob/master/docs/PoliticalSponsorCategories.png)
 
-Impressions per Demographic Group   
+Impressions per Demographic Group.   
 
 ![ImpressionDemos](https://github.com/online-pol-ads/FBPoliticalAds/blob/master/docs/ImpressionsDemographic.png)
 
