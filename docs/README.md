@@ -20,14 +20,30 @@ We investigate the following questions in analysis section of the paper:
 
 We also dig into our data to discover the top sponsors, pages, demographic groups based on minimum impressions garnered. 
 
+
+Overview of Ads.   
+
+![Overview](https://github.com/online-pol-ads/FBPoliticalAds/blob/master/docs/Overview.png)
+
 Heat Map for US Regions Based on Impressions per Capita   
+
 ![HeatMap](https://github.com/online-pol-ads/FBPoliticalAds/blob/master/docs/ImpressionsHeatUSAFinal.png)
 
+Category of Political Sponsors.  
+
+![Categories](https://github.com/online-pol-ads/FBPoliticalAds/blob/master/docs/PoliticalSponsorCategories.png)
+
 Impressions per Demographic Group   
+
 ![ImpressionDemos](https://github.com/online-pol-ads/FBPoliticalAds/blob/master/docs/ImpressionsDemographic.png)
 
+Top 10 Political Sponsors by Minimum Impressions.  
 
+![PolSponsors](https://github.com/online-pol-ads/FBPoliticalAds/blob/master/docs/Top10PoliticalSponsorsMinImp.png)
 
+Top 5 Pages from Unvetted Sponsors by Minimum Impressions.  
+
+![Pages](https://github.com/online-pol-ads/FBPoliticalAds/blob/master/docs/Top5PagesMinImp.png)
 
 
 ## Reports
