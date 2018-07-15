@@ -23,7 +23,7 @@ We also dig into our data to discover the top sponsors, pages, demographic group
 
 Overview of Ads.   
 
-![Overview]({{site.url}}/docs/Overview.png)
+![Overview]({{  site.url  }}/docs/Overview.png)
 
 Heat Map for US Regions Based on Impressions per Capita.   
 
