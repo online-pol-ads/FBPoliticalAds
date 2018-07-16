@@ -4,7 +4,7 @@ Our team performed an initial analysis of Facebook's archive of ads with politic
 
 ## Introduction
 Facebook launched their searchable archive of U.S. political advertisements on May 24, 2018. We devise a data collection methodology to obtain a large set of 267,000 political ads from Facebook’s political ad archive. We find that in total, ads with political content have generated at least 1,435,089,000 impressions and have cost their sponsors $13,913,300 and possibly up to 3,884,705,000 impressions and spent $71,754,827 on advertising with U.S. political content. Individual Facebook pages that sponsor political content ads, on average, generate at least 72,501 total impressions and spend at least $703 on advertising. 
-In our report attached below, we provide our initial analysis of Facebook’s political ad archive. We are also providing all the [raw political content](https://github.com/online-pol-ads/FBPoliticalAds/tree/master/RawContentFiles) ads that we have collected which will be updated weekly.
+In our report attached below, we provide our [initial analysis](https://github.com/online-pol-ads/FBPoliticalAds/blob/master/docs/Facebooks-archive.pdf) of Facebook’s political ad archive. We are also providing all the [raw political content](https://github.com/online-pol-ads/FBPoliticalAds/tree/master/RawContentFiles) ads that we have collected which will be updated weekly.
 
 
 ## Facebook Political Ad Archive Overview
@@ -23,5 +23,6 @@ We also dig into our data to discover the top sponsors, pages, demographic group
 
 ## Reports
 - [Initial Analysis](https://github.com/online-pol-ads/FBPoliticalAds/blob/master/docs/Facebooks-archive.pdf)
+- [Raw Political Content](https://github.com/online-pol-ads/FBPoliticalAds/tree/master/RawContentFiles)
 - Technical Report
 
