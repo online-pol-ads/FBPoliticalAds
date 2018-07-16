@@ -267,14 +267,14 @@ def extractSeedWordsCSV(SeedListName, FirstName = False, LastName = True):
     or last names.
     """
     with open(SeedListName, 'r') as f, open(MasterSeedList, "a+") as f1:
-            if FirstName and LastName:
-                CurrentSeeds = set([' '.join(seedWord).strip() for seedWord in csv.reader(f) if seedWord != " "])
-            elif LastName and not FirstName:
-                CurrentSeeds = set([seedWord[1] for seedWord in csv.reader(f) if seedWord != " "])
-            MasterSeeds = set([seedWord.strip() for seedWord in f1.readlines() if seedWord != " "])
-            NewSeeds = list(CurrentSeeds-MasterSeeds)
-            for Seed in NewSeeds:
-                f1.write(Seed+'\n')
+        if FirstName and LastName:
+            CurrentSeeds = set([' '.join(seedWord).strip() for seedWord in csv.reader(f) if seedWord != " "])
+        elif LastName and not FirstName:
+            CurrentSeeds = set([seedWord[1] for seedWord in csv.reader(f) if seedWord != " "])
+        MasterSeeds = set([seedWord.strip() for seedWord in f1.readlines() if seedWord != " "])
+        NewSeeds = list(CurrentSeeds-MasterSeeds)
+        for Seed in NewSeeds:
+            f1.write(Seed+'\n')
     return NewSeeds
     
 
@@ -283,13 +283,28 @@ def extractSeedWordsCSV(SeedListName, FirstName = False, LastName = True):
 
 def extractSeedWordsTXT(SeedListName):
     with open(SeedListName, 'r') as f, open(MasterSeedList, "a+") as f1:
-            CurrentSeeds = set([seedWord.strip() for seedWord in f.readlines() if seedWord != " "])
-            MasterSeeds = set([seedWord.strip() for seedWord in f1.readlines() if seedWord != " "])
-            NewSeeds = list(CurrentSeeds-MasterSeeds)
-            for Seed in NewSeeds:
-                f1.write(Seed+'\n')
+        CurrentSeeds = set([seedWord.strip() for seedWord in f.readlines() if seedWord != " "])
+        MasterSeeds = set([seedWord.strip() for seedWord in f1.readlines() if seedWord != " "])
+        NewSeeds = list(CurrentSeeds-MasterSeeds)
+        for Seed in NewSeeds:
+            f1.write(Seed+'\n')
     
     return NewSeeds
+
+
+
+
+
+def dedupMasterSeeds():
+    """ 
+    Master seed list has duplicates. Temporary fix to dedup the master seed list.
+    """
+    with open(MasterSeedList) as f:
+        MasterSeeds = set([seedWord.strip() for seedWord in f.readlines() if seedWord != " "])
+        
+    with open(MasterSeedList, 'w') as f:    
+        for Seed in MasterSeeds:
+            f.write(Seed+'\n')
 
 
 
@@ -346,3 +361,4 @@ if __name__ == "__main__":
                 if not SkipKeyword:
                     f.write(Seed.strip() + '\n')
     os.rename(StartTimeStamp, StartTimeStamp[3:]) #To remove NEW prefix
+    dedupMasterSeeds()
