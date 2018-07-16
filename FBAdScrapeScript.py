@@ -106,7 +106,6 @@ def ScrapeAdMetadataByKeyword(CurrentSession, Seed, NumAds = 2000):
     AllAdMetadata.append(DataRetrievedFromLinkJson)
     totalAdCount = DataRetrievedFromLinkJson['payload']['totalCount']
     totalAdCountCurrent += len(DataRetrievedFromLinkJson['payload']['results'])
-    print("Ads collected ", totalAdCountCurrent)
     while not DataRetrievedFromLinkJson['payload']['isResultComplete'] and totalAdCountCurrent < 8000:
         # Limit ad collection to 8000 since FB kills connection after that.
         # WIP to work around the 8K ad limit.  
@@ -127,7 +126,6 @@ def ScrapeAdMetadataByKeyword(CurrentSession, Seed, NumAds = 2000):
                 AllAdMetadata.append(DataRetrievedFromLinkJson)
                 totalAdCount = DataRetrievedFromLinkJson['payload']['totalCount']
                 totalAdCountCurrent += len(DataRetrievedFromLinkJson['payload']['results'])
-                print("Ads collected ", totalAdCountCurrent)
                 time.sleep(1)
                 break
             except:
@@ -316,7 +314,6 @@ if __name__ == "__main__":
         if not os.path.exists(StartTimeStamp):
             os.makedirs(StartTimeStamp)
         with open(os.path.join(StartTimeStamp, "Keywords.txt"), 'a+') as f:
-
             for Seed in Seeds:
                 if Seed.strip() == "":
                     continue
@@ -325,16 +322,13 @@ if __name__ == "__main__":
                 print("Seed %d out of %d\n" % (SeedCount, TotalSeeds))
                 SkipKeyword = False
                 for attempts in range(5):
-                    try:
+                    try:        
                         AllAdsMetadata = ScrapeAdMetadataByKeyword(currentSession, Seed)
                         break
-                        # FB cuts off some connections randomly and doesn't return any data. 
-                        # to work around presumable load balancing of FB servers, every
-                        # keyword will be tried 5 times if FB resets connection with a time interval of 10 secs.
-                    except: 
+                    except:
                         if attempts == 4:
-                            SkipKeyword = True
-                            break
+                             SkipKeyword = True
+                             break
                         time.sleep(10)
 
                 time.sleep(10)
