@@ -21,6 +21,48 @@ We investigate the following questions in analysis section of the paper:
 We also dig into our data to discover the top sponsors, pages, demographic groups based on minimum impressions garnered. 
 
 
+**Overview of Ads**
+
+Total Ads  |  Total Sponsors  |  Total Pages  |         Min/Max Impressions       |        Min/Max Spend 
+:---:      | :---:            | :---:         | :---:                             | :---:                
+267,000   |       9,842      |     19,794    |   1,435,089,000 - 3,884,705,000   |   13,913,300 - 71,754,827
+
+**Top 10 Political Sponsors by Minimum Impressions**
+
+Sponsors                                     | Sponsor Category                  | Total Ads       | Impressions | Spend 
+:---                                         |  :---                             | :---:           | :---:       | :---: 
+the Trump Make America Great Again Committee | Person | 4,127 |  26,402,000 | 190,400 
+Planned Parenthood Federation of America | Non Profit | 3,389 |  24,510,000 | 188,800
+AAF Nation, LLC | Clothing Company | 862 |  1,8380,000 |  78,900
+NRA | Non Profit | 213 | 18,286,000 | 58,000
+Beto for Texas | Politician | 377 | 13,040,000 | 194,400 
+Priorities USA Action and Senate Majority PAC. | Political Organization, Community | 2,796 | 12,900,000 | 120,600 
+NowThis | News Site, Media News Company | 35 | 11,601,000 | 7,400
+Donald J. Trump for President, Inc. | Person | 5,396 | 11,263,000 | 83,700
+4Ocean, LLC | Product Service | 78 | 10,621,000 | 68,200
+Care2 | Cause | 557 | 10,149,000 | 99,900   
+
+**Category of Political Sponsors**
+
+Sponsor Category | # Sponsors | Total Ads | Total Impressions | Total Spend
+:---             | :---:      | :---:     | :---:             | :---:
+Non Profit | 1,783 | 40,020 | 295,412,000 | 2,533,300 
+Politician | 1,856 | 30,029 | 151,667,000 | 1,822,700 
+Political Candidate | 3,425 | 34,597 | 128,574,000 | 1,321,700 
+Political Organization | 1,391 | 24,240 | 127,932,000 | 1,569,800 
+Person | 1,071 | 22,582 | 101,433,000 | 931,500   
+
+**Top 5 Pages from Unvetted Sponsors by Minimum Impressions**
+
+Name | Page Category | Total Ads | Impressions | Spend
+:--- | :---          | :---:     | :---:       | :---:
+American AF | Clothing Company | 253 | 8,198,000 | $103,800 
+NRA - National Rifle Association of America | Non Profit | 56 | 7,925,000 | $78,500 
+I’ll go ahead and keep my guns, Thanks | Media | 26 | 7,562,000 | $120,300 
+China Xinhua News | Media News Company | 44 | 6,835,000 | $6,000 
+Walmart | Retail Company | 18 | 5,790,000 | $51,900   
+
+
 ## Reports
 - [Initial Analysis](https://github.com/online-pol-ads/FBPoliticalAds/blob/master/docs/Facebooks-archive.pdf)
 - [Raw Political Content](https://github.com/online-pol-ads/FBPoliticalAds/tree/master/RawContentFiles)
