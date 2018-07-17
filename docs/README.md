@@ -33,7 +33,7 @@ Sponsors                                     | Sponsor Category                 
 :---                                         |  :---                             | :---:           | :---:       | :---: 
 the Trump Make America Great Again Committee | Person | 4,127 |  26,402,000 | 190,400 
 Planned Parenthood Federation of America | Non Profit | 3,389 |  24,510,000 | 188,800
-AAF Nation, LLC | Clothing Company | 862 |  1,8380,000 |  78,900
+AAF Nation, LLC | Clothing Company | 862 |  18,380,000 |  78,900
 NRA | Non Profit | 213 | 18,286,000 | 58,000
 Beto for Texas | Politician | 377 | 13,040,000 | 194,400 
 Priorities USA Action and Senate Majority PAC. | Political Organization, Community | 2,796 | 12,900,000 | 120,600 
@@ -54,7 +54,7 @@ Person | 1,071 | 22,582 | 101,433,000 | 931,500
 
 **Top 5 Pages from Unvetted Sponsors by Minimum Impressions**
 
-Name | Page Category | Total Ads | Impressions | Spend
+Page Name | Page Category | Total Ads | Impressions | Spend
 :--- | :---          | :---:     | :---:       | :---:
 American AF | Clothing Company | 253 | 8,198,000 | $103,800 
 NRA - National Rifle Association of America | Non Profit | 56 | 7,925,000 | $78,500 
