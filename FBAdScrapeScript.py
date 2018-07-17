@@ -1,5 +1,6 @@
 import configparser
 import csv
+import datetime 
 import json
 import os
 import pickle
@@ -35,7 +36,9 @@ URLparameters = urllib.parse.urlencode(parameters_for_URL)
 
 prefix_length = len("for (;;);")
 
-StartTimeStamp = 'NEWcrawl_'+str(int(time.time())) # Adding NEW so DB parser doesn't try to parse this until it's complete.
+now = datetime.datetime.now()
+now_str = "".join(str(e) for e in [now.year, now.month, now.day, now.hour])
+StartTimeStamp = 'NEWcrawl_'+ now_str # Adding NEW so DB parser doesn't try to parse this until it's complete.
 
 LatestTimestampRecorded = 0
 
