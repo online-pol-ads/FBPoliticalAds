@@ -98,7 +98,7 @@ for FolderName in os.listdir(crawl_folder):
                 continue
             Ads = section['payload']
             for ad_id, ad_contents in Ads.items():
-                if str(ad_id) in ad_ids:
+                if int(ad_id) in ad_ids:
                     continue #we've already seen this ad_id, we don't have to reinsert its contents
                 ad_archive_id = ad_contents['adArchiveID']
                 ad_has_cards = False
