@@ -268,7 +268,8 @@ def ScrapePerformanceDetailsSeq(AllAdsMetadata, CurrentSession):
             DataRetrievedFromLink = data.text[prefix_length:] 
             DataRetrievedFromLinkJson = json.loads(DataRetrievedFromLink)
             if "error" in DataRetrievedFromLinkJson:
-                time.sleep(random.uniform(0,2))
+                time.sleep(random.randint(10,20))
+                #time.sleep(random.uniform(1,2))
                 print(Count)
                 print("AdIDArchive : ", AdID)
                 data = CurrentSession.get(PerformanceDetials)
@@ -277,7 +278,7 @@ def ScrapePerformanceDetailsSeq(AllAdsMetadata, CurrentSession):
         else:
             print(Count)
             print("AdIDArchive : ", AdID)
-        time.sleep(random.uniform(0,1.5))
+        time.sleep(random.uniform(1,1.5))
         AdPerformance.append(DataRetrievedFromLinkJson)
     return AdPerformance
 
@@ -393,17 +394,7 @@ if __name__ == "__main__":
                 print("Done with metadata")
 
                 ScrapePerformanceDetailsSeq(AllAdsMetadata, currentSession) 
-                
 
-                # for attempts in range(5):
-                #     try:        
-                #         ScrapeAdsByAdIDs(currentSession, adIDs, Seed)
-                #         break
-                #     except:
-                #         if attempts == 4:
-                #              SkipKeyword = True
-                #              break
-                #         time.sleep(10)
                 if not SkipKeyword:
                     f.write(Seed.strip() + '\n')
     #os.rename(StartTimeStamp, StartTimeStamp[3:]) #To remove NEW prefix
