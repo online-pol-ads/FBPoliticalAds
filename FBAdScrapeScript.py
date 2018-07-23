@@ -210,7 +210,7 @@ def ScrapeAdIDs(AllAdsMetadata, IDsDB):
     Chunk = 500
     for AdIDChunk in AllAdsMetadata:
         for ad in AdIDChunk['payload']['results']:
-            if ad["adArchiveID"] not in IDsDB:
+            if int(ad["adArchiveID"]) not in IDsDB:
                 AllAdIDs.append(ad["adArchiveID"])
     print("Total AdIDs ", len(AllAdIDs))
     Start = 0
@@ -249,7 +249,7 @@ def ScrapePerformanceDetails(CurrentSession, AdID):
 def ScrapePerformanceDetailsThreadHelper(AllAdsMetadata, CurrentSession, IDsDB):
     
     for adIDs in ScrapeAdIDs(AllAdsMetadata, IDsDB):
-        pool = ThreadPool(3)
+        pool = ThreadPool(1)
         results = pool.starmap(ScrapePerformanceDetails, zip(itertools.repeat(CurrentSession), adIDs))
         print(results)
         pool.close()
