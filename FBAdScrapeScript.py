@@ -331,11 +331,14 @@ if __name__ == "__main__":
     ExtractLastTimestampExtracted()
     IterationCount = 0
     SeedCount = 0
+    IDSet = set()
     connection = psycopg2.connect(DBAuthorize)
     cursor = connection.cursor(cursor_factory=psycopg2.extras.DictCursor)
     cursor.execute("SELECT distinct archive_id from ads")
     IDsDB = cursor.fetchall()
-    print(IDsDB)
+    for id in IDsDB:
+        IDSet.add(id[0])
+    print(IDSet)
     Start = time.time()
     with requests.Session() as currentSession:
         data = {"email":config['ACCOUNT']['EMAIL'], "pass":config['ACCOUNT']['PASS']}
@@ -369,7 +372,7 @@ if __name__ == "__main__":
                         time.sleep(10)
                 print("Done with metadata")
 
-                ScrapePerformanceDetailsThreadHelper(AllAdsMetadata, currentSession, IDsDB) 
+                ScrapePerformanceDetailsThreadHelper(AllAdsMetadata, currentSession, IDSet) 
                 
 
                 # for attempts in range(5):
