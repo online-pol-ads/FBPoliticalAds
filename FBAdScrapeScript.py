@@ -1,6 +1,6 @@
 import configparser
 import csv
-import datetime 
+import datetime
 import json
 import os
 import pickle
@@ -8,11 +8,14 @@ import shutil
 import sys
 import time
 import urllib.parse
+from multiprocessing.dummy import Pool as ThreadPool
 from pprint import pprint
-
+import itertools
 import requests
 import urllib3
 
+import psycopg2
+import psycopg2.extras
 
 if len(sys.argv) < 2:
     exit("Usage:python3 FBAdScrapeScript.py crawl_config.cfg")
@@ -20,6 +23,13 @@ if len(sys.argv) < 2:
 
 config = configparser.ConfigParser()
 config.read(sys.argv[1])
+
+HOST = config['POSTGRES']['HOST']
+DBNAME = config['POSTGRES']['DBNAME']
+USER = config['POSTGRES']['USER']
+PASSWORD = config['POSTGRES']['PASSWORD']
+DBAuthorize = "host=%s dbname=%s user=%s password=%s" % (HOST, DBNAME, USER, PASSWORD)
+
 
 Email = config['ACCOUNT']['EMAIL']
 Password = config['ACCOUNT']['PASS']
@@ -50,7 +60,7 @@ adMetadataLinkTemplate = "https://www.facebook.com/politicalcontentads/ads/?q=%s
 adMetadataLinkNextPageTemplate = "https://www.facebook.com/politicalcontentads/ads/?q=%s&page_token=%s&count=%s&active_status=all&dpr=1&%s"
 # The above link has additional parameter for the page_token that is retrieved when the inital call is made to get the metadata.
 
-adContentLinkTemplate = "https://www.facebook.com/ads/political_ad_archive/creative_snapshot/?%s&dpr=1&%s"
+adPerformanceDetails = "https://www.facebook.com/politicalcontentads/insights/?ad_archive_id=%s&%s"
 
 
 def ExtractLastTimestampExtracted():
@@ -189,7 +199,7 @@ def WriteToFiles(Payload, TypeOfPayload, Seed):
 
 
 
-def ScrapeAdIDs(AllAdsMetadata):
+def ScrapeAdIDs(AllAdsMetadata, IDsDB):
     """
     Iterates over the dictionaries in the list and extracts
     the AdArchiveIDs and stores them in chunk for retrieving
@@ -197,50 +207,54 @@ def ScrapeAdIDs(AllAdsMetadata):
     """
     adIDsChunk = [] 
     AllAdIDs = []
-    ChunkSize = 500
-
+    Chunk = 500
     for AdIDChunk in AllAdsMetadata:
         for ad in AdIDChunk['payload']['results']:
-            adIDsChunk.append(ad["adArchiveID"])
-            if len(adIDsChunk) == ChunkSize:
-                AllAdIDs.append(adIDsChunk)
-                adIDsChunk = []
-    AllAdIDs.append(adIDsChunk)
-    return AllAdIDs
+            if ad["adArchiveID"] not in IDsDB:
+                AllAdIDs.append(ad["adArchiveID"])
+    print("Total AdIDs ", len(AllAdIDs))
+    Start = 0
+    End = Chunk
+    Loop = True
+    while Loop:
+        yield AllAdIDs[Start:End]
+        if End < len(AllAdIDs):
+            Loop = False
+        Start += Chunk
+        End += Chunk
+        time.sleep(2)
 
 
 
 
 
-def ScrapeAdsByAdIDs(currentSession, adIDs, Seed):
+def ScrapePerformanceDetails(CurrentSession, AdID):
     """
-    Retrieves Ad contents for the given adIDs by stringing them
-    together in the form used in FB URLs. 
-    adIDs is a list of lists containing 500 adIDs each. 
-    The function makes requests for 500 ads in every iteration (for 
-    optimization and load balancing) and appends the content retrieved 
-    (JSON form) to a list. 
+    Access the performance information per ad using AJAX call.
     """
-    allAdsContents = []
-    adIDQueryList = []
-    count = 0
-    for adIDList in adIDs:
-
-        for adID in range(0, len(adIDList)):
-            adIDQueryList.append("ids[" + str(adID) + "]=" + adIDList[adID])
-        if adIDQueryList:
-            count += 1
-            adIDQuery = "&".join(adIDQueryList)
-            adIDQueryList = []
-            adContentLink = adContentLinkTemplate % (adIDQuery, URLparameters)
-            adContentRetrieved = currentSession.get(adContentLink)
-            adContentRetrieved = adContentRetrieved.text[prefix_length:]
-            adContentRetrievedJson = json.loads(adContentRetrieved)
-            time.sleep(3)
-            allAdsContents.append(adContentRetrievedJson)   
-    WriteToFiles(allAdsContents, "Contents", Seed)
+    time.sleep(0.5)
+    AdPerformance = []
+    PerformanceDetials = adPerformanceDetails % (AdID, URLparameters)
+    data = CurrentSession.get(PerformanceDetials).text
+    print("Data: ", data)
+    print("ADID: ", AdID)
+    #DataRetrievedFromLink = data.text[prefix_length:] 
+    #DataRetrievedFromLinkJson = json.loads(data)
+    return data
 
 
+
+
+
+def ScrapePerformanceDetailsThreadHelper(AllAdsMetadata, CurrentSession, IDsDB):
+    
+    for adIDs in ScrapeAdIDs(AllAdsMetadata, IDsDB):
+        pool = ThreadPool(3)
+        results = pool.starmap(ScrapePerformanceDetails, zip(itertools.repeat(CurrentSession), adIDs))
+        print(results)
+        pool.close()
+        pool.join()
+        
 
 
 
@@ -317,6 +331,11 @@ if __name__ == "__main__":
     ExtractLastTimestampExtracted()
     IterationCount = 0
     SeedCount = 0
+    connection = psycopg2.connect(DBAuthorize)
+    cursor = connection.cursor(cursor_factory=psycopg2.extras.DictCursor)
+    cursor.execute("SELECT distinct archive_id from ads")
+    IDsDB = cursor.fetchall()
+    print(IDsDB)
     Start = time.time()
     with requests.Session() as currentSession:
         data = {"email":config['ACCOUNT']['EMAIL'], "pass":config['ACCOUNT']['PASS']}
@@ -348,20 +367,22 @@ if __name__ == "__main__":
                              SkipKeyword = True
                              break
                         time.sleep(10)
+                print("Done with metadata")
 
-                time.sleep(10)
-                adIDs = ScrapeAdIDs(AllAdsMetadata)
-                for attempts in range(5):
-                    try:        
-                        ScrapeAdsByAdIDs(currentSession, adIDs, Seed)
-                        break
-                    except:
-                        if attempts == 4:
-                             SkipKeyword = True
-                             break
-                        time.sleep(10)
+                ScrapePerformanceDetailsThreadHelper(AllAdsMetadata, currentSession, IDsDB) 
+                
 
+                # for attempts in range(5):
+                #     try:        
+                #         ScrapeAdsByAdIDs(currentSession, adIDs, Seed)
+                #         break
+                #     except:
+                #         if attempts == 4:
+                #              SkipKeyword = True
+                #              break
+                #         time.sleep(10)
                 if not SkipKeyword:
                     f.write(Seed.strip() + '\n')
-    os.rename(StartTimeStamp, StartTimeStamp[3:]) #To remove NEW prefix
-    dedupMasterSeeds()
+    #os.rename(StartTimeStamp, StartTimeStamp[3:]) #To remove NEW prefix
+    print("EndTime: ", time.time() - Start)
+    #dedupMasterSeeds()
