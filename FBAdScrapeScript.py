@@ -213,16 +213,8 @@ def ScrapeAdIDs(AllAdsMetadata, IDsDB):
             if int(ad["adArchiveID"]) not in IDsDB:
                 AllAdIDs.append(ad["adArchiveID"])
     print("Total AdIDs ", len(AllAdIDs))
-    Start = 0
-    End = Chunk
-    Loop = True
-    while Loop:
-        yield AllAdIDs[Start:End]
-        if End < len(AllAdIDs):
-            Loop = False
-        Start += Chunk
-        End += Chunk
-        time.sleep(2)
+    return AllAdIDs
+
 
 
 
@@ -232,7 +224,7 @@ def ScrapePerformanceDetails(CurrentSession, AdID):
     """
     Access the performance information per ad using AJAX call.
     """
-    time.sleep(0.5)
+    time.sleep(1)
     AdPerformance = []
     PerformanceDetials = adPerformanceDetails % (AdID, URLparameters)
     data = CurrentSession.get(PerformanceDetials).text
@@ -247,14 +239,13 @@ def ScrapePerformanceDetails(CurrentSession, AdID):
 
 
 def ScrapePerformanceDetailsThreadHelper(AllAdsMetadata, CurrentSession, IDsDB):
-    
-    for adIDs in ScrapeAdIDs(AllAdsMetadata, IDsDB):
-        pool = ThreadPool(1)
-        results = pool.starmap(ScrapePerformanceDetails, zip(itertools.repeat(CurrentSession), adIDs))
-        print(results)
-        pool.close()
-        pool.join()
+    adIDs = ScrapeAdIDs(AllAdsMetadata, IDsDB)
+    pool = ThreadPool(2)
+    results = pool.starmap(ScrapePerformanceDetails, zip(itertools.repeat(CurrentSession), adIDs))
+    pool.close()
+    pool.join()
         
+
 
 
 
