@@ -13,6 +13,7 @@ from pprint import pprint
 import itertools
 import requests
 import urllib3
+import random
 
 import psycopg2
 import psycopg2.extras
@@ -199,7 +200,7 @@ def WriteToFiles(Payload, TypeOfPayload, Seed):
 
 
 
-def ScrapeAdIDs(AllAdsMetadata, IDsDB):
+def ScrapeAdIDs(AllAdsMetadata):
     """
     Iterates over the dictionaries in the list and extracts
     the AdArchiveIDs and stores them in chunk for retrieving
@@ -210,11 +211,10 @@ def ScrapeAdIDs(AllAdsMetadata, IDsDB):
     Chunk = 500
     for AdIDChunk in AllAdsMetadata:
         for ad in AdIDChunk['payload']['results']:
-            if int(ad["adArchiveID"]) not in IDsDB:
+            if int(ad["adArchiveID"]):
                 AllAdIDs.append(ad["adArchiveID"])
     print("Total AdIDs ", len(AllAdIDs))
     return AllAdIDs
-
 
 
 
@@ -224,7 +224,7 @@ def ScrapePerformanceDetails(CurrentSession, AdID):
     """i
     Access the performance information per ad using AJAX call.
     """
-    time.sleep(1)
+    time.sleep(random.uniform(0,1.5))
     AdPerformance = []
     PerformanceDetials = adPerformanceDetails % (AdID, URLparameters)
     data = CurrentSession.get(PerformanceDetials)
@@ -245,8 +245,8 @@ def ScrapePerformanceDetails(CurrentSession, AdID):
 
 
 
-def ScrapePerformanceDetailsThreadHelper(AllAdsMetadata, CurrentSession, IDsDB):
-    adIDs = ScrapeAdIDs(AllAdsMetadata, IDsDB)
+def ScrapePerformanceDetailsThreadHelper(AllAdsMetadata, CurrentSession):
+    adIDs = ScrapeAdIDs(AllAdsMetadata)
     # pool = ThreadPool(1)
     # results = pool.starmap(ScrapePerformanceDetails, zip(itertools.repeat(CurrentSession), adIDs))
     # pool.close()
@@ -256,20 +256,26 @@ def ScrapePerformanceDetailsThreadHelper(AllAdsMetadata, CurrentSession, IDsDB):
 
 
 
-def ScrapePerformanceDetailsSeq(AllAdsMetadata, CurrentSession, IDsDB):
-    adIDs = ScrapeAdIDs(AllAdsMetadata, IDsDB)
+def ScrapePerformanceDetailsSeq(AllAdsMetadata, CurrentSession):
+    adIDs = ScrapeAdIDs(AllAdsMetadata)
     AdPerformance = []
+    Count = 0
     for AdID in adIDs:
+        Count += 1
         PerformanceDetials = adPerformanceDetails % (AdID, URLparameters)
         data = CurrentSession.get(PerformanceDetials)
         DataRetrievedFromLink = data.text[prefix_length:] 
         DataRetrievedFromLinkJson = json.loads(DataRetrievedFromLink)
         if "error" in DataRetrievedFromLinkJson:
+            print(Count)
             print("AdIDArchive : ", AdID)
-        time.sleep(1)
+            data = CurrentSession.get(PerformanceDetials)
+            DataRetrievedFromLink = data.text[prefix_length:] 
+            DataRetrievedFromLinkJson = json.loads(DataRetrievedFromLink)
+        time.sleep(random.uniform(0,1.5))
         AdPerformance.append(DataRetrievedFromLinkJson)
     return AdPerformance
-            
+
 
 
 
@@ -288,6 +294,7 @@ def extractSeedWords(SeedListName=MasterSeedList):
         return extractSeedWordsTXT(SeedListName)
     elif SeedListName[-4:] == '.csv':
         return extractSeedWordsCSV(SeedListName)
+
 
 
 
@@ -347,14 +354,6 @@ if __name__ == "__main__":
     ExtractLastTimestampExtracted()
     IterationCount = 0
     SeedCount = 0
-    IDSet = set()
-    connection = psycopg2.connect(DBAuthorize)
-    cursor = connection.cursor(cursor_factory=psycopg2.extras.DictCursor)
-    cursor.execute("SELECT distinct archive_id from ads")
-    IDsDB = cursor.fetchall()
-    for ID in IDsDB:
-        IDSet.add(ID[0])
-    print(IDSet)
     Start = time.time()
     with requests.Session() as currentSession:
         data = {"email":config['ACCOUNT']['EMAIL'], "pass":config['ACCOUNT']['PASS']}
@@ -388,7 +387,7 @@ if __name__ == "__main__":
                         time.sleep(10)
                 print("Done with metadata")
 
-                ScrapePerformanceDetailsSeq(AllAdsMetadata, currentSession, IDSet) 
+                ScrapePerformanceDetailsSeq(AllAdsMetadata, currentSession) 
                 
 
                 # for attempts in range(5):
