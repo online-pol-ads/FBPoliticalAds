@@ -1,22 +1,20 @@
 import configparser
 import csv
 import datetime
+import itertools
 import json
 import os
 import pickle
+import random
 import shutil
 import sys
 import time
 import urllib.parse
 from multiprocessing.dummy import Pool as ThreadPool
 from pprint import pprint
-import itertools
+
 import requests
 import urllib3
-import random
-
-import psycopg2
-import psycopg2.extras
 
 if len(sys.argv) < 2:
     exit("Usage:python3 FBAdScrapeScript.py crawl_config.cfg")
@@ -24,13 +22,6 @@ if len(sys.argv) < 2:
 
 config = configparser.ConfigParser()
 config.read(sys.argv[1])
-
-HOST = config['POSTGRES']['HOST']
-DBNAME = config['POSTGRES']['DBNAME']
-USER = config['POSTGRES']['USER']
-PASSWORD = config['POSTGRES']['PASSWORD']
-DBAuthorize = "host=%s dbname=%s user=%s password=%s" % (HOST, DBNAME, USER, PASSWORD)
-
 
 Email = config['ACCOUNT']['EMAIL']
 Password = config['ACCOUNT']['PASS']
@@ -213,7 +204,6 @@ def ScrapeAdIDs(AllAdsMetadata):
         for ad in AdIDChunk['payload']['results']:
             if int(ad["adArchiveID"]):
                 AllAdIDs.append(ad["adArchiveID"])
-    print("Total AdIDs ", len(AllAdIDs))
     return AllAdIDs
 
 
@@ -268,6 +258,7 @@ def ScrapePerformanceDetailsSeq(AllAdsMetadata, CurrentSession):
             DataRetrievedFromLink = data.text[prefix_length:] 
             DataRetrievedFromLinkJson = json.loads(DataRetrievedFromLink)
             if "error" in DataRetrievedFromLinkJson:
+                print(DataRetrievedFromLinkJson)
                 time.sleep(random.randint(10,20))
                 #time.sleep(random.uniform(1,2))
                 print(Count)
@@ -391,9 +382,6 @@ if __name__ == "__main__":
                              SkipKeyword = True
                              break
                         time.sleep(10)
-                print("Done with metadata")
-
-                ScrapePerformanceDetailsSeq(AllAdsMetadata, currentSession) 
 
                 if not SkipKeyword:
                     f.write(Seed.strip() + '\n')
