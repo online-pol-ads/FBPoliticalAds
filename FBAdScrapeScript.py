@@ -221,17 +221,24 @@ def ScrapeAdIDs(AllAdsMetadata, IDsDB):
 
 
 def ScrapePerformanceDetails(CurrentSession, AdID):
-    """
+    """i
     Access the performance information per ad using AJAX call.
     """
     time.sleep(1)
     AdPerformance = []
     PerformanceDetials = adPerformanceDetails % (AdID, URLparameters)
-    data = CurrentSession.get(PerformanceDetials).text
+    data = CurrentSession.get(PerformanceDetials)
+    DataRetrievedFromLink = data.text[prefix_length:] 
+    DataRetrievedFromLinkJson = json.loads(DataRetrievedFromLink)
     print("Data: ", data)
     print("ADID: ", AdID)
-    #DataRetrievedFromLink = data.text[prefix_length:] 
-    #DataRetrievedFromLinkJson = json.loads(data)
+    if "error" in DataRetrievedFromLinkJson:
+        while "error" in DataRetrievedFromLinkJson.keys():
+            data = CurrentSession.get(PerformanceDetials).text
+            print("Data: ", data)
+            print("ADID: ", AdID)
+            DataRetrievedFromLink = data[prefix_length:] 
+            DataRetrievedFromLinkJson = json.loads(DataRetrievedFromLink)
     return data
 
 
@@ -240,11 +247,29 @@ def ScrapePerformanceDetails(CurrentSession, AdID):
 
 def ScrapePerformanceDetailsThreadHelper(AllAdsMetadata, CurrentSession, IDsDB):
     adIDs = ScrapeAdIDs(AllAdsMetadata, IDsDB)
-    pool = ThreadPool(2)
-    results = pool.starmap(ScrapePerformanceDetails, zip(itertools.repeat(CurrentSession), adIDs))
-    pool.close()
-    pool.join()
-        
+    # pool = ThreadPool(1)
+    # results = pool.starmap(ScrapePerformanceDetails, zip(itertools.repeat(CurrentSession), adIDs))
+    # pool.close()
+    # pool.join()
+
+
+
+
+
+def ScrapePerformanceDetailsSeq(AllAdsMetadata, CurrentSession, IDsDB):
+    adIDs = ScrapeAdIDs(AllAdsMetadata, IDsDB)
+    AdPerformance = []
+    for AdID in adIDs:
+        PerformanceDetials = adPerformanceDetails % (AdID, URLparameters)
+        data = CurrentSession.get(PerformanceDetials)
+        DataRetrievedFromLink = data.text[prefix_length:] 
+        DataRetrievedFromLinkJson = json.loads(DataRetrievedFromLink)
+        if "error" in DataRetrievedFromLinkJson:
+            print("AdIDArchive : ", AdID)
+        time.sleep(1)
+        AdPerformance.append(DataRetrievedFromLinkJson)
+    return AdPerformance
+            
 
 
 
@@ -327,8 +352,8 @@ if __name__ == "__main__":
     cursor = connection.cursor(cursor_factory=psycopg2.extras.DictCursor)
     cursor.execute("SELECT distinct archive_id from ads")
     IDsDB = cursor.fetchall()
-    for id in IDsDB:
-        IDSet.add(id[0])
+    for ID in IDsDB:
+        IDSet.add(ID[0])
     print(IDSet)
     Start = time.time()
     with requests.Session() as currentSession:
@@ -363,7 +388,7 @@ if __name__ == "__main__":
                         time.sleep(10)
                 print("Done with metadata")
 
-                ScrapePerformanceDetailsThreadHelper(AllAdsMetadata, currentSession, IDSet) 
+                ScrapePerformanceDetailsSeq(AllAdsMetadata, currentSession, IDSet) 
                 
 
                 # for attempts in range(5):
