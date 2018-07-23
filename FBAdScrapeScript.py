@@ -264,14 +264,19 @@ def ScrapePerformanceDetailsSeq(AllAdsMetadata, CurrentSession):
         Count += 1
         PerformanceDetials = adPerformanceDetails % (AdID, URLparameters)
         data = CurrentSession.get(PerformanceDetials)
-        DataRetrievedFromLink = data.text[prefix_length:] 
-        DataRetrievedFromLinkJson = json.loads(DataRetrievedFromLink)
-        if "error" in DataRetrievedFromLinkJson:
-            print(Count)
-            print("AdIDArchive : ", AdID)
-            data = CurrentSession.get(PerformanceDetials)
+        if data:
             DataRetrievedFromLink = data.text[prefix_length:] 
             DataRetrievedFromLinkJson = json.loads(DataRetrievedFromLink)
+            if "error" in DataRetrievedFromLinkJson:
+                time.sleep(random.uniform(0,2))
+                print(Count)
+                print("AdIDArchive : ", AdID)
+                data = CurrentSession.get(PerformanceDetials)
+                DataRetrievedFromLink = data.text[prefix_length:] 
+                DataRetrievedFromLinkJson = json.loads(DataRetrievedFromLink)
+        else:
+            print(Count)
+            print("AdIDArchive : ", AdID)
         time.sleep(random.uniform(0,1.5))
         AdPerformance.append(DataRetrievedFromLinkJson)
     return AdPerformance
