@@ -23,8 +23,8 @@ if len(sys.argv) < 2:
 config = configparser.ConfigParser()
 config.read(sys.argv[1])
 
-Email = config['ACCOUNT']['EMAIL']
-Password = config['ACCOUNT']['PASS']
+Email = config['ACCOUNT']['EMAIL1']
+Password = config['ACCOUNT']['PASS1']
 
 parameters_for_URL = {
     "__user":config['COOKIES']['USERFIELD'],
@@ -53,6 +53,9 @@ adMetadataLinkNextPageTemplate = "https://www.facebook.com/politicalcontentads/a
 # The above link has additional parameter for the page_token that is retrieved when the inital call is made to get the metadata.
 
 adPerformanceDetails = "https://www.facebook.com/politicalcontentads/insights/?ad_archive_id=%s&%s"
+
+
+
 
 
 def ExtractLastTimestampExtracted():
@@ -140,7 +143,7 @@ def ScrapeAdMetadataByKeyword(CurrentSession, Seed, NumAds = 2000):
                 print("Trying again")
                 time.sleep(3)
 
-    WriteToFiles(AllAdMetadata, "Metadata", Seed) #List of dictionaries returned
+    WriteToFiles(AllAdMetadata, "Contents", Seed) #List of dictionaries returned
     return AllAdMetadata
 
 
@@ -186,92 +189,6 @@ def WriteToFiles(Payload, TypeOfPayload, Seed):
 
     with open(Path + ".txt", 'w') as f:
         json.dump(Payload, f)
-
-
-
-
-
-def ScrapeAdIDs(AllAdsMetadata):
-    """
-    Iterates over the dictionaries in the list and extracts
-    the AdArchiveIDs and stores them in chunk for retrieving
-    the AdContents.
-    """
-    adIDsChunk = [] 
-    AllAdIDs = []
-    Chunk = 500
-    for AdIDChunk in AllAdsMetadata:
-        for ad in AdIDChunk['payload']['results']:
-            if int(ad["adArchiveID"]):
-                AllAdIDs.append(ad["adArchiveID"])
-    return AllAdIDs
-
-
-
-
-
-def ScrapePerformanceDetails(CurrentSession, AdID):
-    """i
-    Access the performance information per ad using AJAX call.
-    """
-    time.sleep(random.uniform(0,1.5))
-    AdPerformance = []
-    PerformanceDetials = adPerformanceDetails % (AdID, URLparameters)
-    data = CurrentSession.get(PerformanceDetials)
-    DataRetrievedFromLink = data.text[prefix_length:] 
-    DataRetrievedFromLinkJson = json.loads(DataRetrievedFromLink)
-    print("Data: ", data)
-    print("ADID: ", AdID)
-    if "error" in DataRetrievedFromLinkJson:
-        while "error" in DataRetrievedFromLinkJson.keys():
-            data = CurrentSession.get(PerformanceDetials).text
-            print("Data: ", data)
-            print("ADID: ", AdID)
-            DataRetrievedFromLink = data[prefix_length:] 
-            DataRetrievedFromLinkJson = json.loads(DataRetrievedFromLink)
-    return data
-
-
-
-
-
-def ScrapePerformanceDetailsThreadHelper(AllAdsMetadata, CurrentSession):
-    adIDs = ScrapeAdIDs(AllAdsMetadata)
-    # pool = ThreadPool(1)
-    # results = pool.starmap(ScrapePerformanceDetails, zip(itertools.repeat(CurrentSession), adIDs))
-    # pool.close()
-    # pool.join()
-
-
-
-
-
-def ScrapePerformanceDetailsSeq(AllAdsMetadata, CurrentSession):
-    adIDs = ScrapeAdIDs(AllAdsMetadata)
-    AdPerformance = []
-    Count = 0
-    for AdID in adIDs:
-        Count += 1
-        PerformanceDetials = adPerformanceDetails % (AdID, URLparameters)
-        data = CurrentSession.get(PerformanceDetials)
-        if data:
-            DataRetrievedFromLink = data.text[prefix_length:] 
-            DataRetrievedFromLinkJson = json.loads(DataRetrievedFromLink)
-            if "error" in DataRetrievedFromLinkJson:
-                print(DataRetrievedFromLinkJson)
-                time.sleep(random.randint(10,20))
-                #time.sleep(random.uniform(1,2))
-                print(Count)
-                print("AdIDArchive : ", AdID)
-                data = CurrentSession.get(PerformanceDetials)
-                DataRetrievedFromLink = data.text[prefix_length:] 
-                DataRetrievedFromLinkJson = json.loads(DataRetrievedFromLink)
-        else:
-            print(Count)
-            print("AdIDArchive : ", AdID)
-        time.sleep(random.uniform(1,1.5))
-        AdPerformance.append(DataRetrievedFromLinkJson)
-    return AdPerformance
 
 
 
@@ -353,7 +270,7 @@ if __name__ == "__main__":
     SeedCount = 0
     Start = time.time()
     with requests.Session() as currentSession:
-        data = {"email":config['ACCOUNT']['EMAIL'], "pass":config['ACCOUNT']['PASS']}
+        data = {"email":config['ACCOUNT']['EMAIL1'], "pass":config['ACCOUNT']['PASS1']}
         post = currentSession.post("https://www.facebook.com/login", data)
         post = currentSession.post("https://www.facebook.com/login", data)
         if config['SEEDLIST']['SEEDFILE'] != 'XXX':
@@ -385,6 +302,7 @@ if __name__ == "__main__":
 
                 if not SkipKeyword:
                     f.write(Seed.strip() + '\n')
-    #os.rename(StartTimeStamp, StartTimeStamp[3:]) #To remove NEW prefix
+    FinalDirName = StartTimeStamp[3:]
+    os.rename(StartTimeStamp, FinalDirName) #To remove NEW prefix
     print("EndTime: ", time.time() - Start)
-    #dedupMasterSeeds()
+    dedupMasterSeeds()

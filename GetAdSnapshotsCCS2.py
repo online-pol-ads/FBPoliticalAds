@@ -1,4 +1,5 @@
 import configparser
+import datetime
 import os
 import json
 import sys
@@ -32,11 +33,12 @@ adPerformanceDetails = "https://www.facebook.com/politicalcontentads/insights/?a
 
 DBAuthorize = "host=%s dbname=%s user=%s password=%s" % (HOST, DBNAME, USER, PASSWORD)
 
-WriteDir = config['WORKING_DIR']['NAME']
+
+now = datetime.datetime.now()
+now_str = "".join(str(e) for e in [now.year, now.month, now.day, now.hour])
+WriteDir = 'NEWcrawl_'+ now_str # Adding NEW so DB parser doesn't try to parse this until it's complete.
 
 print("Writing to directory: ", WriteDir)
-
-
 
 
 
@@ -116,6 +118,8 @@ def WriteToFiles(Payload, TypeOfPayload):
     Since each file contains over 2000 entries of content/metadata
     at most. We will need multiple files to store all the data.
   """
+  if not os.path.exists(WriteDir):
+    os.makedirs(WriteDir)
 
   Path = os.path.join(WriteDir, TypeOfPayload)
 
@@ -130,7 +134,7 @@ if __name__ == "__main__":
   random.shuffle(IDs)
   Start = time.time()
   with requests.Session() as currentSession:
-    data = {"email":config['ACCOUNT']['EMAIL'], "pass":config['ACCOUNT']['PASS']}
+    data = {"email":config['ACCOUNT']['EMAIL2'], "pass":config['ACCOUNT']['PASS2']}
     post = currentSession.post("https://www.facebook.com/login", data)
     post = currentSession.post("https://www.facebook.com/login", data)
     #AdIDs = SampleAdIDs(IDs)
