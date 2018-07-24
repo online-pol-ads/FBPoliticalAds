@@ -1,0 +1,140 @@
+import configparser
+import os
+import json
+import sys
+import urllib.parse
+import time
+import random
+import requests
+
+import psycopg2
+import psycopg2.extras
+
+config = configparser.ConfigParser()
+config.read(sys.argv[1])
+
+parameters_for_URL = {
+    "__user":config['COOKIES']['USERFIELD'],
+    "__a":config['COOKIES']['AFIELD'],
+    "__dyn":config['COOKIES']['DYNFIELD'],
+}
+
+prefix_length = len("for (;;);")
+
+URLparameters = urllib.parse.urlencode(parameters_for_URL)
+
+HOST = config['POSTGRES']['HOST']
+DBNAME = config['POSTGRES']['DBNAME']
+USER = config['POSTGRES']['USER']
+PASSWORD = config['POSTGRES']['PASSWORD']
+
+adPerformanceDetails = "https://www.facebook.com/politicalcontentads/insights/?ad_archive_id=%s&%s"
+
+DBAuthorize = "host=%s dbname=%s user=%s password=%s" % (HOST, DBNAME, USER, PASSWORD)
+
+WriteDir = config['WORKING_DIR']['NAME']
+
+print("Writing to directory: ", WriteDir)
+
+
+
+
+
+def ScrapePerformanceDetailsSeq(adIDs, CurrentSession):
+  Start = time.time()
+  AdPerformance = []
+  Count = 0
+  for AdID in adIDs:
+    Count += 1
+    PerformanceDetials = adPerformanceDetails % (AdID, URLparameters)
+    data = CurrentSession.get(PerformanceDetials)
+    if data:
+      DataRetrievedFromLink = data.text[prefix_length:] 
+      DataRetrievedFromLinkJson = json.loads(DataRetrievedFromLink)
+      if "error" in DataRetrievedFromLinkJson:
+        print(DataRetrievedFromLinkJson)
+        print(Count)
+        print("AdIDArchive : ", AdID)
+        if DataRetrievedFromLinkJson['error'] == 2334010:
+          time.sleep(random.randint(10,30))
+        #time.sleep(random.uniform(1,2))
+        data = CurrentSession.get(PerformanceDetials)
+        DataRetrievedFromLink = data.text[prefix_length:] 
+        DataRetrievedFromLinkJson = json.loads(DataRetrievedFromLink)
+    else:
+      print(Count)
+      print("AdIDArchive : ", AdID)
+    time.sleep(random.uniform(1,1.5))
+    AdPerformance.append(DataRetrievedFromLinkJson)
+  print(time.time() - Start)
+  return AdPerformance
+
+
+
+
+
+def SampleAdIDs(IDs):
+    """
+    Samples 200 random IDs to benchmark.
+    """
+    AllAdIDs = []
+    IDsToTest = set()
+    print(len(IDs))
+    while len(IDsToTest) < 200:
+      IDsToTest.add(random.randrange(0, len(IDs)))
+    
+    return [IDs[i] for i in IDsToTest]
+
+
+
+
+def GetAdArchiveIDDB():
+  IDs = []
+  connection = psycopg2.connect(DBAuthorize)
+  cursor = connection.cursor(cursor_factory=psycopg2.extras.DictCursor)
+  Query = """
+      SELECT distinct ad_archive_id 
+      from snapshots
+      WHERE is_active=true and ad_archive_id%2=0
+      """
+  cursor.execute(Query)
+  for ID in cursor.fetchall():
+    IDs.append(ID[0])
+  return IDs
+
+
+
+
+
+def WriteToFiles(Payload, TypeOfPayload):
+  """
+  Writes to files. 
+  Payload is the dictionary being written.
+  Type indicates whether it is Contents of the ad or Metadata.
+  Seed refers to the Search Keyword.
+  Iteration Count refers to the # of file that will be written. 
+    Since each file contains over 2000 entries of content/metadata
+    at most. We will need multiple files to store all the data.
+  """
+
+  Path = os.path.join(WriteDir, TypeOfPayload)
+
+  with open(Path + ".txt", 'w') as f:
+    json.dump(Payload, f)
+
+
+
+
+if __name__ == "__main__":
+  IDs = GetAdArchiveIDDB()
+  random.shuffle(IDs)
+  Start = time.time()
+  with requests.Session() as currentSession:
+    data = {"email":config['ACCOUNT']['EMAIL'], "pass":config['ACCOUNT']['PASS']}
+    post = currentSession.post("https://www.facebook.com/login", data)
+    post = currentSession.post("https://www.facebook.com/login", data)
+    #AdIDs = SampleAdIDs(IDs)
+    Data = ScrapePerformanceDetailsSeq(IDs, currentSession)
+    WriteToFiles(Data, "Metadata")
+  print(time.time() - Start)
+
