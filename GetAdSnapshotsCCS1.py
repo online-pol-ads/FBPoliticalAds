@@ -11,6 +11,11 @@ import requests
 import psycopg2
 import psycopg2.extras
 
+
+if len(sys.argv) < 2:
+    exit("Usage:python3 FBAdScrapeScript.py crawl_config.cfg")
+
+    
 config = configparser.ConfigParser()
 config.read(sys.argv[1])
 
