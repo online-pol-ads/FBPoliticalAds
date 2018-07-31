@@ -23,13 +23,13 @@ if len(sys.argv) < 2:
 config = configparser.ConfigParser()
 config.read(sys.argv[1])
 
-Email = config['ACCOUNT']['EMAIL1']
-Password = config['ACCOUNT']['PASS1']
+Email = config['ACCOUNT']['EMAIL4']
+Password = config['ACCOUNT']['PASS4']
 
 parameters_for_URL = {
-    "__user":config['COOKIES']['USERFIELD'],
-    "__a":config['COOKIES']['AFIELD'],
-    "__dyn":config['COOKIES']['DYNFIELD'],
+    "__user":config['COOKIES']['USERFIELD4'],
+    "__a":config['COOKIES']['AFIELD4'],
+    "__dyn":config['COOKIES']['DYNFIELD4']
 }
 
 MasterSeedList = config['SEEDLIST']['MASTERSEEDFILE']
@@ -40,36 +40,18 @@ prefix_length = len("for (;;);")
 
 now = datetime.datetime.now()
 now_str = "".join(str(e) for e in [now.year, now.month, now.day, now.hour])
-StartTimeStamp = 'NEWcrawl_'+ now_str # Adding NEW so DB parser doesn't try to parse this until it's complete.
+StartTimeStamp = 'NEWcrawl_'+ now_str + "Contents"# Adding NEW so DB parser doesn't try to parse this until it's complete.
 
 LatestTimestampRecorded = 0
-
-adMetadataLinkTemplate = "https://www.facebook.com/politicalcontentads/ads/?q=%s&count=%s&active_status=all&dpr=1&%s"
+adMetadataLinkTemplate = "https://www.facebook.com/ads/archive/async/search_ads/?q=%s&count=%s&active_status=all&ad_type=ads-with-political-content&dpr=2&%s"
 
 # The above link takes in q = Seed word, count = # of ads to be shown and we append the parameters at the end of the link
 # The request response contains the total # of ads for a given seed under "totalCount".
 
-adMetadataLinkNextPageTemplate = "https://www.facebook.com/politicalcontentads/ads/?q=%s&page_token=%s&count=%s&active_status=all&dpr=1&%s"
+adMetadataLinkNextPageTemplate = "https://www.facebook.com/ads/archive/async/search_ads/?q=%s&page_token=%s&count=%s&active_status=all&ad_type=ads-with-political-content&dpr=2&%s"
 # The above link has additional parameter for the page_token that is retrieved when the inital call is made to get the metadata.
-
 adPerformanceDetails = "https://www.facebook.com/politicalcontentads/insights/?ad_archive_id=%s&%s"
 
-
-
-
-
-def ExtractLastTimestampExtracted():
-    """
-    Reads through all the crawl folders to extract the most recent crawl.
-    """
-    global LatestTimestampRecorded
-    Max = 0
-    for FolderName in os.listdir('.'):
-        if FolderName != StartTimeStamp and os.path.isdir(FolderName) and \
-                FolderName.startswith('crawl_'): # All folders with Crawl information are stored as crawl_XXXXX
-            CrawlDate = int(FolderName[len('crawl_'):])
-            if CrawlDate > LatestTimestampRecorded:
-                LatestTimestampRecorded = CrawlDate
 
 
 
@@ -94,7 +76,7 @@ def MigrateFilesProperDirectory(src, dst):
 
 
 
-def ScrapeAdMetadataByKeyword(CurrentSession, Seed, NumAds = 2000):
+def ScrapeAdMetadataByKeyword(CurrentSession, Seed, Cookies, NumAds = 30):
     """
     Returns a list of dictionaries that includes metadata of the Ad and 
     also includes it's performance details. Our program crawls 5000 
@@ -108,16 +90,28 @@ def ScrapeAdMetadataByKeyword(CurrentSession, Seed, NumAds = 2000):
     IterationCount = 1
     URLparameters = urllib.parse.urlencode(parameters_for_URL)
     AdMetadataLink = adMetadataLinkTemplate % (Seed, NumAds, URLparameters) # Scapes 2000 ads
-    data = CurrentSession.get(AdMetadataLink)
+    print(AdMetadataLink)
+    headers = {'user-agent':'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_13_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/67.0.3396.99 Safari/537.36',
+            'origin': 'https://www.facebook.com',
+            'referer': 'https://www.facebook.com/ads/archive/?active_status=all&ad_type=ads-with-political-content&q='+Seed,
+            'accept': '*/*',
+            'accept-language': 'en-US,en;q=0.9',
+            'content-type': 'application/x-www-form-urlencoded'}
+
+    data = CurrentSession.get(AdMetadataLink, headers=headers, cookies=Cookies)
+    
+    print("Data collected", data.text)
+    
     DataRetrievedFromLink = data.text[prefix_length:] 
     DataRetrievedFromLinkJson = json.loads(DataRetrievedFromLink)
+    exit()
     AllAdMetadata.append(DataRetrievedFromLinkJson)
     totalAdCount = DataRetrievedFromLinkJson['payload']['totalCount']
     totalAdCountCurrent += len(DataRetrievedFromLinkJson['payload']['results'])
     while not DataRetrievedFromLinkJson['payload']['isResultComplete'] and totalAdCountCurrent < 8000:
         # Limit ad collection to 8000 since FB kills connection after that.
         # WIP to work around the 8K ad limit.  
-        time.sleep(3)
+        time.sleep(random.randint(1,10))
         IterationCount += 1
         nextPageToken = DataRetrievedFromLinkJson["payload"]["nextPageToken"]
         nextPageToken = urllib.parse.quote(nextPageToken)
@@ -134,14 +128,14 @@ def ScrapeAdMetadataByKeyword(CurrentSession, Seed, NumAds = 2000):
                 AllAdMetadata.append(DataRetrievedFromLinkJson)
                 totalAdCount = DataRetrievedFromLinkJson['payload']['totalCount']
                 totalAdCountCurrent += len(DataRetrievedFromLinkJson['payload']['results'])
-                time.sleep(1)
+                time.sleep(random.randint(1,10))
                 break
             except:
                 if attempts == 4:
                     totalAdCountCurrent = 8000
                     break
                 print("Trying again")
-                time.sleep(3)
+                time.sleep(random.randint(1,10))
 
     WriteToFiles(AllAdMetadata, "Contents", Seed) #List of dictionaries returned
     return AllAdMetadata
@@ -265,7 +259,6 @@ def dedupMasterSeeds():
 
 
 if __name__ == "__main__":
-    ExtractLastTimestampExtracted()
     IterationCount = 0
     SeedCount = 0
     Start = time.time()
@@ -273,6 +266,7 @@ if __name__ == "__main__":
         data = {"email":config['ACCOUNT']['EMAIL1'], "pass":config['ACCOUNT']['PASS1']}
         post = currentSession.post("https://www.facebook.com/login", data)
         post = currentSession.post("https://www.facebook.com/login", data)
+        Cookies = currentSession.cookies.get_dict()
         if config['SEEDLIST']['SEEDFILE'] != 'XXX':
             Seeds = extractSeedWords(config['SEEDLIST']['SEEDFILE'])
         else:
@@ -290,18 +284,18 @@ if __name__ == "__main__":
                 SeedCount += 1
                 print("Seed %d out of %d\n" % (SeedCount, TotalSeeds))
                 SkipKeyword = False
-                for attempts in range(5):
-                    try:        
-                        AllAdsMetadata = ScrapeAdMetadataByKeyword(currentSession, Seed)
-                        break
-                    except:
-                        if attempts == 4:
-                             SkipKeyword = True
-                             break
-                        time.sleep(10)
+                #for attempts in range(5):
+                #    try:        
+                AllAdsMetadata = ScrapeAdMetadataByKeyword(currentSession, Seed, Cookies)
+                #        break
+                #    except:
+                #        if attempts == 4:
+                #             SkipKeyword = True
+                #             break
+                time.sleep(10)
 
-                if not SkipKeyword:
-                    f.write(Seed.strip() + '\n')
+                #if not SkipKeyword:
+                f.write(Seed.strip() + '\n')
     FinalDirName = StartTimeStamp[3:]
     os.rename(StartTimeStamp, FinalDirName) #To remove NEW prefix
     print("EndTime: ", time.time() - Start)
