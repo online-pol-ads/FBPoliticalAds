@@ -68,3 +68,8 @@ Walmart | Retail Company | 18 | 5,790,000 | $51,900
 - [Raw Political Content](https://github.com/online-pol-ads/FBPoliticalAds/tree/master/RawContentFiles)
 - Technical Report
 
+## Contact us
+[Laura Edelson](mailto:lj992@nyu.edu)  
+[Shikhar Sakhuja](https://wp.nyu.edu/shikharsakhuja/)    
+[Ratan Dey](mailto:ratan@nyu.edu)  
+[Damon McCoy](http://damonmccoy.com)
