@@ -70,6 +70,5 @@ Walmart | Retail Company | 18 | 5,790,000 | $51,900
 
 ## Contact us
 [Laura Edelson](mailto:lj992@nyu.edu)  
-[Shikhar Sakhuja](https://wp.nyu.edu/shikharsakhuja/)    
-[Ratan Dey](mailto:ratan@nyu.edu)  
+[Shikhar Sakhuja](https://wp.nyu.edu/shikharsakhuja/)   
 [Damon McCoy](http://damonmccoy.com)
